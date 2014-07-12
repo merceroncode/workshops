@@ -5,7 +5,7 @@ describe ProductsController do
 
   let(:category) { create(:category) }
 
-  let(:valid_attributes) { { "title" => "MyString", "category_id" => category.id } }
+  let(:valid_attributes) { { "title" => "MyString", "description" => "description", "price" => 1.00, "category_id" => category.id } }
 
   let(:valid_session) { {} }
 
@@ -109,6 +109,15 @@ describe ProductsController do
   end
 
   describe "POST create" do
+    let(:user) { create(:user) }
+
+    before do
+      sign_in user
+      controller.stub(:user_signed_in?).and_return(true)
+      controller.stub(:current_user).and_return(user)
+      controller.stub(:authenticate_user!).and_return(user)
+    end
+
     describe "with valid params" do
       it "creates a new Product" do
         expect {
@@ -145,6 +154,16 @@ describe ProductsController do
   end
 
   describe "PUT update" do
+    let(:user) { create(:user) }
+
+    before do
+      sign_in user
+      controller.stub(:user_signed_in?).and_return(true)
+      controller.stub(:current_user).and_return(user)
+      controller.stub(:authenticate_user!).and_return(user)
+      valid_attributes[:user_id] = user.id
+    end
+
     describe "with valid params" do
       it "updates the requested product" do
         product = Product.create! valid_attributes

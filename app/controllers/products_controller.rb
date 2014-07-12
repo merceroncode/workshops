@@ -1,5 +1,6 @@
 class ProductsController < ApplicationController
-
+  before_filter :redirect_not_logged_in, only: [:create, :update]
+  before_filter :set_error_if_cant_edit, only: [:edit, :update]
   expose(:category)
   expose(:products)
   expose(:product)
@@ -16,6 +17,7 @@ class ProductsController < ApplicationController
   end
 
   def edit
+    redirect_to [category, product] unless can_edit?
   end
 
   def create
@@ -30,10 +32,11 @@ class ProductsController < ApplicationController
   end
 
   def update
-    if self.product.update(product_params)
+    if can_edit? and self.product.update(product_params)
       redirect_to category_product_url(category, product), notice: 'Product was successfully updated.'
     else
-      render action: 'edit'
+      (render action: 'edit' and return) if can_edit?
+      redirect_to [category, product]
     end
   end
 
@@ -46,5 +49,21 @@ class ProductsController < ApplicationController
   private
     def product_params
       params.require(:product).permit(:title, :description, :price, :category_id)
+    end
+
+    def set_error_if_cant_edit
+      set_error_message unless can_edit?
+    end
+
+    def redirect_not_logged_in
+      redirect_to new_user_session_path unless user_signed_in?
+    end
+
+    def set_error_message
+      flash[:error] = "You are not allowed to edit this product."
+    end
+
+    def can_edit?
+      product.user == current_user
     end
 end
